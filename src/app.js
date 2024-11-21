@@ -39,47 +39,62 @@ app.post('/ticket/print', async (req, res) => {
                 .send({
                     ...response,
                     error: {
-                        message: `Cannot connect to printer, printer is not connected, internet is down or the ip address is wrong ${printTicketDTO.ipAddress}`,
+                        message: `Impossibile connettersi alla stampante, non è connessa ad internet, manca la connessione o l'indirizzo IP è errato`,
                         errorType: "OfflineCauseStatus",
                     }
                 });
         }
 
         let errors = [];
-        return printer.getStatuses(async statuses => {
-            errors.push(...statuses.map((status) => status.toJSON().statuses.filter(s => s.status === "error").map(e => errorMapper(e))).flat())
 
-            if (errors.length > 0) {
-                //close connection with the printer
+        try {
+            printer.getStatuses(async statuses => {
+                errors.push(...statuses.map((status) => status.toJSON().statuses.filter(s => s.status === "error").map(e => errorMapper(e))).flat())
+
+                if (errors.length > 0) {
+                    //close connection with the printer
+                    await closeConnection(printer, networkDevice);
+
+                    return res.status(500)
+                        .send({ ...response, error: errors[0] });
+                }
+
+                await printer
+                    .flush()
+                    .font('a')
+                    .align('ct')
+                    .size(2, 2)
+                    .text(`Reparto`)
+                    .text(printTicketDTO.departmentName)
+                    .size(1, 1)
+                    .text("Il tuo numero e'")
+                    .size(7, 7)
+                    .text(printTicketDTO.currentNumber)
+                    .size(1, 1)
+                    .text(`Davanti a te ${!printTicketDTO.queueLength ? "non ci sono persone" :
+                        printTicketDTO.queueLength === 1 ? "c'e' una persona" : `ci sono ${printTicketDTO.queueLength} persone`}`)
+                    .feed()
+                    .feed()
+                    .cut(true, 3);
+
                 await closeConnection(printer, networkDevice);
 
-                return res.status(500)
-                    .send({ ...response, error: errors[0] });
-            }
+                return res.status(200)
+                    .send(response);
+            });
 
-            await printer
-                .flush()
-                .font('a')
-                .align('ct')
-                .size(2, 2)
-                .text(`Reparto`)
-                .text(printTicketDTO.departmentName)
-                .size(1, 1)
-                .text("Il tuo numero e'")
-                .size(7, 7)
-                .text(printTicketDTO.currentNumber)
-                .size(1, 1)
-                .text(`Davanti a te ${!printTicketDTO.queueLength ? "non ci sono persone" : 
-                    printTicketDTO.queueLength === 1 ? "c'e' una persona" : `ci sono ${printTicketDTO.queueLength} persone`}`)
-                .feed()
-                .feed()
-                .cut(true, 3);
+        } catch (e) {
 
-            await closeConnection(printer, networkDevice);
+            return res.status(500)
+                .send({
+                    ...response,
+                    error: {
+                        message: `Impossibile stampare il biglietto`,
+                        errorType: "PrinterError",
+                    }
+                });
+        }
 
-            return res.status(200)
-                .send(response);
-        });
     });
 });
 
