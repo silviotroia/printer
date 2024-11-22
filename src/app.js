@@ -69,7 +69,7 @@ app.post('/ticket/print', async (req, res) => {
                     .size(1, 1)
                     .text("Il tuo numero e'")
                     .size(7, 7)
-                    .text(printTicketDTO.currentNumber)
+                    .text(printTicketDTO.currentLastNumber)
                     .size(1, 1)
                     .text(`Davanti a te ${!printTicketDTO.queueLength ? "non ci sono persone" :
                         printTicketDTO.queueLength === 1 ? "c'e' una persona" : `ci sono ${printTicketDTO.queueLength} persone`}`)
