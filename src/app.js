@@ -22,7 +22,7 @@ app.listen(port, () => {
 
 app.post('/ticket/print', async (req, res) => {
     const printTicketDTO = req.body;
-    console.log('JSON BODY: ', JSON.strigify(req.body);
+    console.log('JSON BODY: ', JSON.strigify(req.body));
     const networkDevice = new escpos.Network(printTicketDTO.printerIpAddress, 9100);
     const printer = new escpos.Printer(networkDevice);
 
