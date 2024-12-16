@@ -33,8 +33,8 @@ app.post('/ticket/print', async (req, res) => {
     }
 
     await networkDevice.open(async (err) => {
-        console.log('ERRORE CONNESSIONE: ', err);
         if (!!err) {
+            console.log('ERRORE CONNESSIONE: ', err);
             await closeConnection(printer, networkDevice);
 
             return res.status(500)
