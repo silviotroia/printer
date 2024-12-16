@@ -50,8 +50,11 @@ app.post('/ticket/print', async (req, res) => {
         let errors = [];
 
         try {
+            console.log('prima del status');
             printer.getStatuses(async statuses => {
+                console.log('status: ', statuses);
                 errors.push(...statuses.map((status) => status.toJSON().statuses.filter(s => s.status === "error").map(e => errorMapper(e))).flat())
+                
 
                 if (errors.length > 0) {
                     //close connection with the printer
@@ -81,6 +84,7 @@ app.post('/ticket/print', async (req, res) => {
 
                 await closeConnection(printer, networkDevice);
 
+                console.log('dopo gli status');
                 return res.status(200)
                     .send(response);
             });
